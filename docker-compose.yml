@@ -1,0 +1,54 @@
+version: "3.2"
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: db
+    restart: always
+    volumes:
+      - db-volume:/var/lib/mysql
+    networks:
+      - blog
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: changeme
+  ghost:
+    image: ghost:latest
+    container_name: ghost
+    restart: always
+    volumes:
+      - ghost-volume:/var/lib/ghost
+    networks:
+      - blog
+    ports:
+      - 8080:2368
+    depends_on:
+      - db
+    environment:
+      database__client: mysql
+      database__connection__host: db
+      database__connection__database: ghost
+      database__connection__user: ghost
+      database__connection__password: changeme
+  nginx:
+    restart: always
+    container_name: nginx
+    build:
+      context: nginx/
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CERTBOT_EMAIL: "contact@domain.temp"
+    networks:
+      - blog
+
+networks:
+  blog:
+    driver: bridge
+
+volumes:
+  db-volume:
+  ghost-volume:
